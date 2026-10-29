@@ -402,6 +402,7 @@ app.prepare().then(() => {
               console.warn('Notice: room delete error:', e);
             }
             roomState.delete(code);
+            io.to(`room:${code}`).emit('webrtc-call-ended');
             io.to(`room:${code}`).emit('room-closed', {
               reason: 'Chủ phòng đã rời phòng. Phòng thi đấu đã bị hủy.',
             });
@@ -416,6 +417,7 @@ app.prepare().then(() => {
                 data: { guestId: null, guestReady: false },
               });
             } catch (e) {}
+            io.to(`room:${code}`).emit('webrtc-call-ended');
             io.to(`room:${code}`).emit('guest-left');
             io.to(`room:${code}`).emit('room-state', state);
             io.emit('lobby-updated');
@@ -432,6 +434,7 @@ app.prepare().then(() => {
       try {
         for (const [code, state] of roomState.entries()) {
           if (state.hostSocketId === socket.id) {
+            io.to(`room:${code}`).emit('webrtc-call-ended');
             // Only destroy room if game was not playing yet; if playing, keep state alive for reconnect
             if (!state.isPlaying) {
               try {
@@ -449,6 +452,7 @@ app.prepare().then(() => {
               });
             }
           } else if (state.guestSocketId === socket.id) {
+            io.to(`room:${code}`).emit('webrtc-call-ended');
             state.guestSocketId = null;
             state.guestReady = false;
             if (!state.isPlaying) {

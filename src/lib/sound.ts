@@ -97,6 +97,28 @@ class SoundEffects {
       osc.stop(startTime + 0.35);
     });
   }
+
+  // Incoming video call ring chime
+  playRing() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const chimeFreqs = [587.33, 880, 587.33, 880];
+    chimeFreqs.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const startTime = ctx.currentTime + idx * 0.18;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.25, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + 0.3);
+    });
+  }
 }
 
 export const sounds = new SoundEffects();
+
