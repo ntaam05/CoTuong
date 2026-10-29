@@ -22,6 +22,8 @@ import { XiangqiBoardView } from '@/components/XiangqiBoardView';
 import { sounds } from '@/lib/sound';
 import { useAuth } from '@/context/AuthContext';
 
+export const dynamic = 'force-dynamic';
+
 export default function PlayAiPage() {
   const router = useRouter();
   const { user, refreshUser } = useAuth();

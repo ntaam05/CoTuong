@@ -21,19 +21,6 @@ export default function HomePage() {
   // Tabbar / Sidebar Collapse state (Matching user requirement)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Loading indicator while auth is verified
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#11192e] via-[#0c1222] to-[#060911] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin" />
-          <span className="text-xs text-amber-400 font-semibold font-serif">
-            Cờ Tướng Online...
-          </span>
-        </div>
-      </div>
-    );
-  }
 
   // 1. GIAO DIỆN LANDING PAGE (Khi chưa đăng nhập - Đúng theo Hình 1)
   if (!user) {

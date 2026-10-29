@@ -25,34 +25,30 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const fetchSession = async () => {
+  useEffect(() => {
     try {
       const stored = localStorage.getItem('cotuong_user');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed?.id) {
-          const res = await fetch(`/api/auth?userId=${parsed.id}`);
-          const data = await res.json();
-          if (data.success && data.user) {
-            setUser(data.user);
-            localStorage.setItem('cotuong_user', JSON.stringify(data.user));
-            return;
-          }
+          setUser(parsed);
+          // Re-verify session in background without blocking UI
+          fetch(`/api/auth?userId=${parsed.id}`)
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.success && data.user) {
+                setUser(data.user);
+                localStorage.setItem('cotuong_user', JSON.stringify(data.user));
+              }
+            })
+            .catch(() => {});
         }
       }
-      setUser(null);
     } catch (e) {
       console.error('Error fetching session:', e);
-      setUser(null);
-    } finally {
-      setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchSession();
   }, []);
 
   const login = async (email: string, password: string) => {
