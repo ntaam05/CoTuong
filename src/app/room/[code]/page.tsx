@@ -26,8 +26,6 @@ import { sounds } from '@/lib/sound';
 import { getSocket } from '@/lib/socket';
 import { useAuth } from '@/context/AuthContext';
 
-export const dynamic = 'force-dynamic';
-
 export default function PvPRoomPage({
   params,
 }: {
