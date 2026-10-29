@@ -82,8 +82,8 @@ export default function PvPRoomPage({
   const [gameStartTime, setGameStartTime] = useState<number>(0);
   const [showResignConfirm, setShowResignConfirm] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-
   const socketRef = useRef<any>(null);
+  const [socketInstance, setSocketInstance] = useState<any>(null);
   const moveHistoryRef = useRef<Move[]>([]);
   const playerColorRef = useRef<PieceColor>(playerColor);
   const gameStartTimeRef = useRef<number>(gameStartTime);
@@ -134,6 +134,7 @@ export default function PvPRoomPage({
 
     const socket = getSocket();
     socketRef.current = socket;
+    setSocketInstance(socket);
 
     // Join room
     socket.emit('join-room', {
@@ -700,7 +701,7 @@ export default function PvPRoomPage({
         <div className="lg:col-span-5 space-y-4">
           {/* 1. WebRTC Video Call Component */}
           <VideoCall
-            socket={socketRef.current}
+            socket={socketInstance || socketRef.current}
             roomCode={code}
             isHost={isHost}
             opponentName={
@@ -710,7 +711,7 @@ export default function PvPRoomPage({
 
           {/* 2. Real-time Chat Box (Saves to Database via Prisma) */}
           <ChatBox
-            socket={socketRef.current}
+            socket={socketInstance || socketRef.current}
             roomCode={code}
             roomId={roomData?.id}
             currentUser={user}

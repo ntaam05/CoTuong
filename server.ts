@@ -322,6 +322,16 @@ app.prepare().then(() => {
       if (code) socket.to(`room:${code}`).emit('webrtc-incoming-call', { from: socket.id });
     });
 
+    socket.on('webrtc-call-accepted', ({ roomCode }) => {
+      const code = getValidCode(roomCode);
+      if (code) socket.to(`room:${code}`).emit('webrtc-call-accepted', { from: socket.id });
+    });
+
+    socket.on('webrtc-call-declined', ({ roomCode }) => {
+      const code = getValidCode(roomCode);
+      if (code) socket.to(`room:${code}`).emit('webrtc-call-declined', { from: socket.id });
+    });
+
     socket.on('webrtc-offer', ({ roomCode, offer }) => {
       const code = getValidCode(roomCode);
       if (code) socket.to(`room:${code}`).emit('webrtc-offer-received', { offer, from: socket.id });
