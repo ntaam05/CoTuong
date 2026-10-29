@@ -317,6 +317,16 @@ app.prepare().then(() => {
     });
 
     // WebRTC Signaling
+    socket.on('webrtc-video-ready', ({ roomCode }) => {
+      const code = getValidCode(roomCode);
+      if (code) socket.to(`room:${code}`).emit('webrtc-video-ready', { from: socket.id });
+    });
+
+    socket.on('webrtc-video-disabled', ({ roomCode }) => {
+      const code = getValidCode(roomCode);
+      if (code) socket.to(`room:${code}`).emit('webrtc-video-disabled', { from: socket.id });
+    });
+
     socket.on('webrtc-call-request', ({ roomCode }) => {
       const code = getValidCode(roomCode);
       if (code) socket.to(`room:${code}`).emit('webrtc-incoming-call', { from: socket.id });

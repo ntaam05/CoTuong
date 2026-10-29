@@ -44,8 +44,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
             })
             .catch(() => {});
+          return;
         }
       }
+
+      // No user stored: Auto-create guest session so multiplayer & WebRTC work seamlessly
+      fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'guest_login' }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.user) {
+            setUser(data.user);
+            localStorage.setItem('cotuong_user', JSON.stringify(data.user));
+          }
+        })
+        .catch((err) => console.error('Guest auto-login error:', err));
     } catch (e) {
       console.error('Error fetching session:', e);
     }

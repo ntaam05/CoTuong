@@ -97,6 +97,44 @@ export class AuthController {
     return safeUser;
   }
 
+  static async createGuestUser() {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const guestEmail = `khach_${Date.now()}_${randomSuffix}@cotuong.local`;
+    const hashedPassword = await bcrypt.hash('guest123', 10);
+    const avatars = [
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop',
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop',
+    ];
+    const avatar = avatars[Math.floor(Math.random() * avatars.length)];
+
+    return await prisma.user.create({
+      data: {
+        email: guestEmail,
+        password: hashedPassword,
+        name: `Kỳ thủ ${randomSuffix}`,
+        avatar,
+        level: 1,
+        xp: 100,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatar: true,
+        level: true,
+        xp: true,
+        wins: true,
+        losses: true,
+        draws: true,
+      },
+    });
+  }
+
   static async getUserProfile(id: string) {
     return await prisma.user.findUnique({
       where: { id },

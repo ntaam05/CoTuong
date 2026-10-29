@@ -38,6 +38,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, user: safeUser });
     }
 
+    // Auto Anonymous Guest Login (for players joining via link)
+    if (action === 'guest_login') {
+      const guest = await AuthController.createGuestUser();
+      return NextResponse.json({ success: true, user: guest });
+    }
+
     if (action === 'register') {
       const user = await AuthController.register(email, password, name, avatar);
       return NextResponse.json({ success: true, user });
