@@ -13,6 +13,7 @@ export class HistoryController {
     moves: any[];
     duration?: number;
   }) {
+    const safeMoves = Array.isArray(params.moves) ? params.moves : [];
     const history = await prisma.gameHistory.create({
       data: {
         roomCode: params.roomCode,
@@ -22,39 +23,47 @@ export class HistoryController {
         blackName: params.blackName,
         mode: params.mode,
         winner: params.winner,
-        moves: JSON.stringify(params.moves),
-        totalMoves: params.moves.length,
+        moves: JSON.stringify(safeMoves),
+        totalMoves: safeMoves.length,
         duration: params.duration || 180,
       },
     });
 
-    // Update user stats if registered player
+    // Update user stats safely if registered player exists
     if (params.redPlayerId) {
-      const isWin = params.winner === 'red';
-      const isDraw = params.winner === 'draw';
-      await prisma.user.update({
-        where: { id: params.redPlayerId },
-        data: {
-          wins: isWin ? { increment: 1 } : undefined,
-          losses: !isWin && !isDraw ? { increment: 1 } : undefined,
-          draws: isDraw ? { increment: 1 } : undefined,
-          xp: { increment: isWin ? 50 : 20 },
-        },
-      });
+      try {
+        const isWin = params.winner === 'red';
+        const isDraw = params.winner === 'draw';
+        await prisma.user.update({
+          where: { id: params.redPlayerId },
+          data: {
+            wins: isWin ? { increment: 1 } : undefined,
+            losses: !isWin && !isDraw ? { increment: 1 } : undefined,
+            draws: isDraw ? { increment: 1 } : undefined,
+            xp: { increment: isWin ? 50 : 20 },
+          },
+        });
+      } catch (err) {
+        console.warn('Could not update red player stats (guest or non-existent user):', err);
+      }
     }
 
     if (params.blackPlayerId) {
-      const isWin = params.winner === 'black';
-      const isDraw = params.winner === 'draw';
-      await prisma.user.update({
-        where: { id: params.blackPlayerId },
-        data: {
-          wins: isWin ? { increment: 1 } : undefined,
-          losses: !isWin && !isDraw ? { increment: 1 } : undefined,
-          draws: isDraw ? { increment: 1 } : undefined,
-          xp: { increment: isWin ? 50 : 20 },
-        },
-      });
+      try {
+        const isWin = params.winner === 'black';
+        const isDraw = params.winner === 'draw';
+        await prisma.user.update({
+          where: { id: params.blackPlayerId },
+          data: {
+            wins: isWin ? { increment: 1 } : undefined,
+            losses: !isWin && !isDraw ? { increment: 1 } : undefined,
+            draws: isDraw ? { increment: 1 } : undefined,
+            xp: { increment: isWin ? 50 : 20 },
+          },
+        });
+      } catch (err) {
+        console.warn('Could not update black player stats (guest or non-existent user):', err);
+      }
     }
 
     return history;

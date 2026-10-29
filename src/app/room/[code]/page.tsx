@@ -84,6 +84,27 @@ export default function PvPRoomPage({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const socketRef = useRef<any>(null);
+  const moveHistoryRef = useRef<Move[]>([]);
+  const playerColorRef = useRef<PieceColor>(playerColor);
+  const gameStartTimeRef = useRef<number>(gameStartTime);
+  const roomStateRef = useRef(roomState);
+  const hasRegisteredGuestRef = useRef(false);
+
+  useEffect(() => {
+    moveHistoryRef.current = moveHistory;
+  }, [moveHistory]);
+
+  useEffect(() => {
+    playerColorRef.current = playerColor;
+  }, [playerColor]);
+
+  useEffect(() => {
+    gameStartTimeRef.current = gameStartTime;
+  }, [gameStartTime]);
+
+  useEffect(() => {
+    roomStateRef.current = roomState;
+  }, [roomState]);
 
   // Fetch initial room data from API
   useEffect(() => {
@@ -107,7 +128,7 @@ export default function PvPRoomPage({
     fetchRoom();
   }, [code, router]);
 
-  // Connect to Socket.IO
+  // Connect to Socket.IO once roomData and user are ready
   useEffect(() => {
     if (!user || !roomData) return;
 
@@ -120,13 +141,18 @@ export default function PvPRoomPage({
       user,
     });
 
-    // Also call API to register guest if not host
-    if (roomData.hostId !== user.id && (!roomData.guestId || roomData.guestId === user.id)) {
+    // Also call API to register guest once if not host
+    if (
+      roomData.hostId !== user.id &&
+      (!roomData.guestId || roomData.guestId === user.id) &&
+      !hasRegisteredGuestRef.current
+    ) {
+      hasRegisteredGuestRef.current = true;
       fetch(`/api/rooms/${code}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'join', userId: user.id }),
-      });
+      }).catch((e) => console.warn('Guest join notice:', e));
     }
 
     // Listen to room state updates
@@ -179,10 +205,10 @@ export default function PvPRoomPage({
         socket.emit('game-finished', {
           roomCode: code,
           winner: oppColor,
-          redUser: roomState.hostUser,
-          blackUser: roomState.guestUser,
-          moves: [...moveHistory, move],
-          duration: Math.round((Date.now() - gameStartTime) / 1000),
+          redUser: roomStateRef.current.hostUser,
+          blackUser: roomStateRef.current.guestUser,
+          moves: [...moveHistoryRef.current, move],
+          duration: Math.round((Date.now() - gameStartTimeRef.current) / 1000),
           reason: 'Chiếu bí',
         });
       }
@@ -191,7 +217,7 @@ export default function PvPRoomPage({
     // Listen to game ended
     socket.on('game-ended', ({ winner, reason }: any) => {
       setGameOver({ winner, reason });
-      if (winner === playerColor) {
+      if (winner === playerColorRef.current) {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         sounds.playVictory();
       }
@@ -262,7 +288,7 @@ export default function PvPRoomPage({
       socket.off('room-closed');
       socket.off('guest-left');
     };
-  }, [user, roomData, code, playerColor, moveHistory, gameStartTime, roomState.hostUser, roomState.guestUser, router]);
+  }, [user, roomData?.id, code, router]);
 
   // Timers countdown
   useEffect(() => {
