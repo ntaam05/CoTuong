@@ -4,33 +4,20 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Bot,
-  PlusCircle,
-  KeyRound,
-  Users,
-  Clock,
-  Sparkles,
+  Bot, PlusCircle, KeyRound, Users, User, Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getSocket } from '@/lib/socket';
 
 interface RoomItem {
-  id: string;
-  code: string;
-  name: string;
-  status: string;
+  id: string; code: string; name: string; status: string;
   host: { id: string; name: string; avatar: string; level: number };
   guest?: { id: string; name: string; avatar: string; level: number } | null;
 }
 
 interface MatchItem {
-  id: string;
-  redName: string;
-  blackName: string;
-  winner: string;
-  mode: string;
-  createdAt: string;
-  totalMoves: number;
+  id: string; redName: string; blackName: string; winner: string;
+  mode: string; createdAt: string; totalMoves: number;
 }
 
 interface DashboardProps {
@@ -38,352 +25,175 @@ interface DashboardProps {
   onJoinRoom: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({
-  onCreateRoom,
-  onJoinRoom,
-}) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onCreateRoom, onJoinRoom }) => {
   const router = useRouter();
   const { user } = useAuth();
   const [rooms, setRooms] = useState<RoomItem[]>([]);
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
+  
+  // === TRẠNG THÁI SÁNG TỐI ===
+  const [isDark, setIsDark] = useState(true);
 
-  // Fetch waiting rooms from database
+  // Kích hoạt class 'dark' cho thẻ <html>
+  useEffect(() => {
+    if (isDark) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, [isDark]);
+
   const fetchRooms = async () => {
     try {
       const res = await fetch('/api/rooms');
       const data = await res.json();
-      if (data.success) {
-        setRooms(data.rooms || []);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingRooms(false);
-    }
+      if (data.success) setRooms(data.rooms || []);
+    } catch (e) { console.error(e); } finally { setLoadingRooms(false); }
   };
 
-  // Fetch recent matches from database
   const fetchMatches = async () => {
     try {
       const res = await fetch('/api/history?limit=6');
       const data = await res.json();
-      if (data.success) {
-        setMatches(data.history || []);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      if (data.success) setMatches(data.history || []);
+    } catch (e) { console.error(e); }
   };
 
   useEffect(() => {
-    fetchRooms();
-    fetchMatches();
-
+    fetchRooms(); fetchMatches();
     const socket = getSocket();
-    socket.on('lobby-updated', () => {
-      fetchRooms();
-    });
-
-    return () => {
-      socket.off('lobby-updated');
-    };
+    socket.on('lobby-updated', fetchRooms);
+    return () => { socket.off('lobby-updated'); };
   }, []);
 
-  // Compute player stats
   const totalGames = (user?.wins || 0) + (user?.losses || 0) + (user?.draws || 0);
   const wins = user?.wins ?? 0;
   const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
 
   return (
-    <div
-      id="dashboard-section"
-      className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 py-6"
-    >
-      {/* 1. Welcome User Banner with Refined Gradient & No EXP Bar */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#17223b] via-[#12192c] to-[#0a0f1d] border border-amber-500/25 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
-        {/* Subtle ambient lighting inside banner */}
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-10 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-4 max-w-xl">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2">
-                Xin chào, {user?.name || 'Kỳ Thủ'} 👋
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-300/80 mt-1.5 leading-relaxed">
-                Chúc bạn có những ván cờ thật vui, kịch tính và thăng hoa cùng chiến thuật!
-              </p>
-            </div>
-
-            {/* 3 Stats Badges (Trận đấu, Thắng, Tỷ lệ thắng) */}
-            <div className="flex items-center gap-3 sm:gap-4 pt-1">
-              <div className="px-5 py-2.5 bg-gradient-to-b from-[#141d30]/90 to-[#0d1424]/90 border border-slate-700/60 rounded-2xl shadow-inner text-center">
-                <p className="text-[11px] text-slate-400 font-medium">Trận đấu</p>
-                <p className="text-base sm:text-lg font-black text-white">{totalGames}</p>
-              </div>
-
-              <div className="px-5 py-2.5 bg-gradient-to-b from-[#141d30]/90 to-[#0d1424]/90 border border-slate-700/60 rounded-2xl shadow-inner text-center">
-                <p className="text-[11px] text-slate-400 font-medium">Thắng</p>
-                <p className="text-base sm:text-lg font-black text-emerald-400">{wins}</p>
-              </div>
-
-              <div className="px-5 py-2.5 bg-gradient-to-b from-[#141d30]/90 to-[#0d1424]/90 border border-slate-700/60 rounded-2xl shadow-inner text-center">
-                <p className="text-[11px] text-slate-400 font-medium">Tỷ lệ thắng</p>
-                <p className="text-base sm:text-lg font-black text-amber-400">{winRate}%</p>
-              </div>
-            </div>
+    <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 py-8 animate-in fade-in duration-500">
+      
+      {/* 1. Header & Nút Gạt */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-slate-200 dark:border-zinc-800 transition-colors">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center border border-slate-200 dark:border-zinc-800 bg-white dark:bg-black transition-colors">
+            <User className="w-7 h-7 text-slate-800 dark:text-zinc-200" />
           </div>
-
-          {/* Right illustration of circular Chinese board with pieces */}
-          <div className="hidden md:flex relative shrink-0 items-center justify-center">
-            <div className="w-40 h-40 rounded-full border border-amber-500/25 bg-gradient-to-b from-[#1a140d] to-[#0f0c08] shadow-[0_0_40px_rgba(217,119,6,0.15)] flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-2 rounded-full border border-amber-500/15" />
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full piece-red flex items-center justify-center font-serif text-xl font-black shadow-lg">
-                  帥
-                </div>
-                <div className="w-14 h-14 rounded-full piece-black flex items-center justify-center font-serif text-xl font-black shadow-lg">
-                  將
-                </div>
-              </div>
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Xin chào, {user?.name || 'Kỳ Thủ'}</h2>
+            <div className="flex items-center gap-4 mt-1 text-sm font-medium text-slate-500 dark:text-zinc-400">
+              <span>Trận: <strong className="text-slate-900 dark:text-white">{totalGames}</strong></span>
+              <span>Thắng: <strong className="text-slate-900 dark:text-white">{wins}</strong></span>
+              <span>Tỷ lệ: <strong className="text-slate-900 dark:text-white">{winRate}%</strong></span>
             </div>
           </div>
         </div>
+
+        <button
+          onClick={() => setIsDark(!isDark)}
+          className="relative w-14 h-7 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-500 bg-slate-200 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 flex-shrink-0"
+        >
+          <div className={`w-5 h-5 rounded-full bg-white dark:bg-black shadow-sm transform transition-transform duration-500 flex items-center justify-center ${isDark ? 'translate-x-7' : 'translate-x-0'}`}>
+            {isDark ? <Moon className="w-3 h-3 text-slate-900 dark:text-white" /> : <Sun className="w-3 h-3 text-slate-900 dark:text-white" />}
+          </div>
+        </button>
       </div>
 
-      {/* 2. Game Modes: Chơi với máy, Tạo phòng, Tham gia phòng (Bỏ chơi online generic) */}
+      {/* 2. Menu Chế Độ Chơi */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-white tracking-wide">Chế độ chơi</h3>
-          <Link
-            href="/history"
-            className="text-xs text-slate-400 hover:text-amber-400 transition"
-          >
-            Lịch sử đấu &gt;
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Chơi với máy */}
-          <div className="bg-gradient-to-b from-[#162035]/90 via-[#101728]/90 to-[#0a0f1d]/90 border border-slate-800/90 hover:border-amber-500/40 rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-0.5 shadow-lg group">
-            <div className="space-y-2">
-              <div className="w-11 h-11 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:scale-105 transition">
-                <Bot className="w-6 h-6" />
-              </div>
-              <h4 className="text-base font-bold text-white group-hover:text-amber-400 transition">
-                Chơi với máy
-              </h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Luyện tập trí tuệ từ cấp độ Dễ đến Khó với AI thông minh.
-              </p>
+        <h3 className="text-xl font-bold tracking-tight mb-4 text-slate-900 dark:text-white">Chế Độ Chơi</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="group rounded-xl p-6 transition-all duration-300 bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-500 shadow-sm">
+            <div className="w-10 h-10 rounded-full border border-slate-200 dark:border-zinc-800 flex items-center justify-center mb-4 text-slate-800 dark:text-zinc-200 group-hover:scale-110 transition-transform">
+              <Bot className="w-5 h-5" />
             </div>
-            <Link
-              href="/play/ai"
-              className="mt-6 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs rounded-xl text-center shadow-md transition active:scale-95"
-            >
-              Bắt đầu
-            </Link>
+            <h4 className="text-lg font-bold mb-2 text-slate-900 dark:text-white">Luyện Tập AI</h4>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mb-6">Đấu với máy để nâng cao kỳ nghệ.</p>
+            <Link href="/play/ai" className="flex justify-center w-full py-2.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-sm rounded-lg transition-transform active:scale-95">Chơi Đơn</Link>
           </div>
 
-          {/* Tạo phòng */}
-          <div className="bg-gradient-to-b from-[#162035]/90 via-[#101728]/90 to-[#0a0f1d]/90 border border-slate-800/90 hover:border-amber-500/40 rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-0.5 shadow-lg group">
-            <div className="space-y-2">
-              <div className="w-11 h-11 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:scale-105 transition">
-                <PlusCircle className="w-6 h-6" />
-              </div>
-              <h4 className="text-base font-bold text-white group-hover:text-amber-400 transition">
-                Tạo phòng
-              </h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Tạo phòng riêng, chia sẻ mã phòng để bạn bè cùng tham gia thi đấu.
-              </p>
+          <div className="group rounded-xl p-6 transition-all duration-300 bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-500 shadow-sm">
+            <div className="w-10 h-10 rounded-full border border-slate-200 dark:border-zinc-800 flex items-center justify-center mb-4 text-slate-800 dark:text-zinc-200 group-hover:scale-110 transition-transform">
+              <PlusCircle className="w-5 h-5" />
             </div>
-            <button
-              onClick={onCreateRoom}
-              className="mt-6 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs rounded-xl text-center shadow-md transition active:scale-95"
-            >
-              Tạo phòng
-            </button>
+            <h4 className="text-lg font-bold mb-2 text-slate-900 dark:text-white">Tạo Phòng</h4>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mb-6">Mở phòng mới và chia sẻ mã mời.</p>
+            <button onClick={onCreateRoom} className="w-full py-2.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-sm rounded-lg transition-transform active:scale-95">Tạo Mới</button>
           </div>
 
-          {/* Tham gia phòng */}
-          <div className="bg-gradient-to-b from-[#162035]/90 via-[#101728]/90 to-[#0a0f1d]/90 border border-slate-800/90 hover:border-amber-500/40 rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-0.5 shadow-lg group">
-            <div className="space-y-2">
-              <div className="w-11 h-11 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-105 transition">
-                <KeyRound className="w-6 h-6" />
-              </div>
-              <h4 className="text-base font-bold text-white group-hover:text-amber-400 transition">
-                Tham gia phòng
-              </h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Nhập mã phòng (6 ký tự) để nhanh chóng vào trận đấu đối kháng.
-              </p>
+          <div className="group rounded-xl p-6 transition-all duration-300 bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-500 shadow-sm">
+            <div className="w-10 h-10 rounded-full border border-slate-200 dark:border-zinc-800 flex items-center justify-center mb-4 text-slate-800 dark:text-zinc-200 group-hover:scale-110 transition-transform">
+              <KeyRound className="w-5 h-5" />
             </div>
-            <button
-              onClick={onJoinRoom}
-              className="mt-6 w-full py-2.5 bg-slate-800/90 hover:bg-slate-700 text-white font-bold text-xs rounded-xl text-center border border-slate-700/80 transition active:scale-95"
-            >
-              Nhập mã
-            </button>
+            <h4 className="text-lg font-bold mb-2 text-slate-900 dark:text-white">Vào Bằng Mã</h4>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mb-6">Nhập mã 6 số để vào phòng nhanh.</p>
+            <button onClick={onJoinRoom} className="w-full py-2.5 bg-transparent text-slate-900 dark:text-white border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 font-bold text-sm rounded-lg transition-all active:scale-95">Nhập Mã</button>
           </div>
         </div>
       </div>
 
-      {/* 3. Main Sections: Phòng chơi đang chờ & Trận đấu gần đây */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Phòng chơi đang chờ (KHÔNG DÙNG DATAMOCK) */}
-        <div className="bg-gradient-to-b from-[#151f34]/90 via-[#101627]/90 to-[#0b0f1c]/90 border border-slate-800/90 rounded-2xl p-5 shadow-xl">
-          <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-slate-800/80">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <h3 className="text-sm font-bold text-white">Phòng chơi đang chờ</h3>
-            </div>
-            <button
-              onClick={onCreateRoom}
-              className="text-xs text-amber-400 hover:text-amber-300 font-semibold transition"
-            >
-              + Tạo phòng mới
-            </button>
+      {/* 3. Lịch Sử & Phòng Chờ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Lịch Sử Gần Đây</h3>
+            <Link href="/history" className="text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white">Tất cả</Link>
           </div>
-
-          {loadingRooms ? (
-            <div className="py-12 text-center text-slate-500 text-xs">
-              Đang tải danh sách phòng...
-            </div>
-          ) : rooms.length === 0 ? (
-            <div className="py-12 px-4 text-center border border-dashed border-slate-800/80 rounded-xl bg-slate-950/30">
-              <Users className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-60" />
-              <p className="text-xs text-slate-400 font-medium mb-1">
-                Hiện chưa có phòng nào đang chờ
-              </p>
-              <p className="text-[11px] text-slate-500 mb-4">
-                Hãy bấm tạo phòng để mời đối thủ hoặc tạo mã thi đấu!
-              </p>
-              <button
-                onClick={onCreateRoom}
-                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow transition"
-              >
-                Tạo phòng ngay
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
-              {rooms.map((room) => {
-                const playerCount = (room.host ? 1 : 0) + (room.guest ? 1 : 0);
-                const isFull = playerCount >= 2;
-
-                return (
-                  <div
-                    key={room.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition"
-                  >
+          <div className="bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+            {matches.length === 0 ? (
+              <div className="p-8 text-center text-sm text-slate-500 dark:text-zinc-500">Chưa có trận đấu nào.</div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-zinc-800">
+                {matches.map((m) => (
+                  <div key={m.id} className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          room.status === 'playing' ? 'bg-amber-400' : 'bg-emerald-400'
-                        }`}
-                      />
+                      <div className={`w-2 h-2 rounded-full ${m.winner === 'draw' ? 'bg-slate-400' : 'bg-slate-900 dark:bg-white'}`} />
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white">{room.name}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-amber-400 font-mono">
-                            #{room.code}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-400">
-                          Chủ phòng: {room.host.name} • {playerCount}/2{' '}
-                          {room.status === 'playing' ? 'Đang chơi' : 'Đang chờ'}
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">
+                          {m.redName} <span className="text-slate-400 font-normal mx-1">vs</span> {m.blackName}
                         </p>
+                        <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">{m.mode.includes('ai') ? 'Đấu Máy' : 'Đấu Người'} • {m.totalMoves} nước</p>
                       </div>
                     </div>
-
-                    <button
-                      onClick={() => router.push(`/room/${room.code}`)}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                        isFull
-                          ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                          : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold shadow'
-                      }`}
-                    >
-                      {isFull ? 'Theo dõi' : 'Tham gia'}
-                    </button>
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-md border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300">
+                      {m.winner === 'draw' ? 'Hòa' : m.winner === 'red' ? 'Đỏ thắng' : 'Đen thắng'}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Trận đấu gần đây */}
-        <div className="bg-gradient-to-b from-[#151f34]/90 via-[#101627]/90 to-[#0b0f1c]/90 border border-slate-800/90 rounded-2xl p-5 shadow-xl">
-          <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-slate-800/80">
-            <h3 className="text-sm font-bold text-white">Trận đấu gần đây</h3>
-            <Link
-              href="/history"
-              className="text-xs text-slate-400 hover:text-amber-400 transition"
-            >
-              Xem tất cả &gt;
-            </Link>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Phòng Trực Tuyến</h3>
+            <button className="text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-opacity">Làm mới</button>
           </div>
-
-          <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
-            {matches.length === 0 ? (
-              <div className="py-12 text-center text-slate-500 text-xs">
-                Chưa có dữ liệu trận đấu nào.
+          <div className="grid grid-cols-1 gap-3">
+            {loadingRooms ? (
+              <div className="p-8 text-center text-sm text-slate-500 border border-slate-200 dark:border-zinc-800 bg-white dark:bg-black rounded-xl">Đang tải...</div>
+            ) : rooms.length === 0 ? (
+              <div className="p-8 text-center border border-dashed border-slate-300 dark:border-zinc-700 rounded-xl">
+                <p className="text-sm font-medium text-slate-600 dark:text-zinc-400">Chưa có phòng nào.</p>
+                <button onClick={onCreateRoom} className="mt-2 text-sm font-bold text-slate-900 dark:text-white underline">Tạo phòng ngay</button>
               </div>
             ) : (
-              matches.map((m) => {
-                const isRedWin = m.winner === 'red';
-                const isDraw = m.winner === 'draw';
-
+              rooms.map((room) => {
+                const isFull = (room.host ? 1 : 0) + (room.guest ? 1 : 0) >= 2;
                 return (
-                  <div
-                    key={m.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-xs font-bold text-slate-300">
-                        {m.redName.slice(0, 1)}
+                  <div key={room.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-black border border-slate-200 dark:border-zinc-800 rounded-xl gap-4 hover:border-slate-300 dark:hover:border-zinc-600 transition-colors shadow-sm">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-slate-900 dark:text-white">{room.name}</span>
+                        <span className="text-xs px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400">#{room.code}</span>
                       </div>
-                      <div>
-                        <p className="text-xs font-bold text-white">
-                          {m.redName} <span className="text-slate-500">vs</span> {m.blackName}
-                        </p>
-                        <p className="text-[11px] text-slate-400">
-                          {m.mode === 'ai_easy'
-                            ? 'Máy (Dễ)'
-                            : m.mode === 'ai_hard'
-                            ? 'Máy (Khó)'
-                            : 'Phòng PvP'}
-                          {' • '}
-                          {m.totalMoves} nước
-                        </p>
+                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                        <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {room.host.name}</span>
+                        <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {isFull ? '2/2' : '1/2'}</span>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-3 text-right">
-                      <div>
-                        <span
-                          className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                            isDraw
-                              ? 'bg-slate-700 text-slate-300'
-                              : isRedWin
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                          }`}
-                        >
-                          {isDraw ? 'Hòa' : isRedWin ? 'Đỏ thắng' : 'Đen thắng'}
-                        </span>
-                      </div>
-                      <Link
-                        href="/history"
-                        className="text-xs text-amber-400 hover:text-amber-300 font-semibold"
-                      >
-                        Xem lại
-                      </Link>
-                    </div>
+                    <button onClick={() => router.push(`/room/${room.code}`)} className={`w-full sm:w-auto px-5 py-2 rounded-lg font-bold text-sm transition-transform active:scale-95 ${isFull ? 'bg-transparent border border-slate-200 dark:border-zinc-800 text-slate-500 dark:text-zinc-500' : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'}`}>
+                      {isFull ? 'Xem Trận' : 'Vào Chơi'}
+                    </button>
                   </div>
                 );
               })
@@ -391,49 +201,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       </div>
-
-      {/* 4. Bottom Challenge Banner */}
-      <div
-        className="relative rounded-2xl overflow-hidden p-6 sm:p-8 border border-amber-500/20 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4"
-        style={{
-          backgroundImage: `url('/images/banner-bg.jpg')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="absolute inset-0 bg-[#090d18]/85 backdrop-blur-[2px]" />
-        <div className="relative z-10">
-          <h4 className="text-lg sm:text-xl font-bold text-white mb-1">Thử thách bản thân</h4>
-          <p className="text-xs sm:text-sm text-slate-300">
-            Rèn luyện tư duy chiến thuật đỉnh cao cùng cờ tướng truyền thống!
-          </p>
-        </div>
-        <div className="relative z-10">
-          <button
-            onClick={onCreateRoom}
-            className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg transition active:scale-95"
-          >
-            Tạo phòng ngay
-          </button>
-        </div>
-      </div>
-
-      {/* 5. Footer */}
-      <footer className="pt-8 pb-4 border-t border-slate-800/80 text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-[10px] text-amber-400 font-serif font-bold">
-            將
-          </div>
-          <span className="font-semibold text-slate-300">Cờ Tướng Online</span>
-          <span>• Kết nối đam mê - Thách thức bản thân</span>
-        </div>
-
-        <div className="flex items-center gap-6">
-          <a href="#" className="hover:text-amber-400 transition">Hướng dẫn</a>
-          <a href="#" className="hover:text-amber-400 transition">Điều khoản</a>
-          <a href="#" className="hover:text-amber-400 transition">Liên hệ</a>
-        </div>
-      </footer>
     </div>
   );
 };

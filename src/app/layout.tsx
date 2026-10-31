@@ -14,6 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
+    // Thẻ html giữ nguyên class="dark" để mặc định mở web là màu đen
     <html lang="vi" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,7 +24,8 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-gradient-to-b from-[#11192e] via-[#0c1222] to-[#060911] text-[#f8fafc] min-h-screen selection:bg-amber-500/30 selection:text-amber-200">
+      {/* Đã gỡ bỏ gradient cũ, thay bằng bg-white/dark:bg-black và text-slate-900/dark:text-white */}
+      <body className="bg-white text-slate-900 dark:bg-black dark:text-white min-h-screen transition-colors duration-500 selection:bg-sky-500/20 selection:text-sky-600 dark:selection:bg-sky-500/30 dark:selection:text-sky-200">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

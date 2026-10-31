@@ -42,7 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`hidden lg:flex flex-col bg-gradient-to-b from-[#101728] via-[#0c1220] to-[#070a12] border-r border-slate-800/80 p-3 shrink-0 min-h-screen transition-all duration-300 relative z-30 shadow-2xl ${
+      className={`hidden lg:flex flex-col bg-white dark:bg-black border-r border-black/10 dark:border-white/10 p-3 shrink-0 min-h-screen transition-all duration-300 relative z-30 ${
         isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
@@ -50,13 +50,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className={`flex items-center mb-6 px-2 py-1 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         {!isCollapsed && (
           <Link href="/" className="flex items-center gap-2.5 group overflow-hidden">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 p-[1.5px] shadow-lg shadow-amber-500/20 shrink-0">
-              <div className="w-full h-full rounded-full bg-[#16120b] flex items-center justify-center">
-                <span className="font-bold text-base text-amber-400 font-serif">將</span>
-              </div>
+            <div className="w-8 h-8 rounded-full border border-black/20 dark:border-white/20 flex items-center justify-center shrink-0">
+              <span className="font-bold text-base font-serif text-black dark:text-white">將</span>
             </div>
-            <span className="text-base font-bold text-white tracking-wide group-hover:text-amber-400 transition truncate">
-              Cờ Tướng <span className="text-amber-400">Online</span>
+            <span className="text-base font-bold text-black dark:text-white tracking-wide truncate">
+              Cờ Tướng <span className="text-slate-400 dark:text-zinc-500">Online</span>
             </span>
           </Link>
         )}
@@ -65,10 +63,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           onClick={onToggleCollapse}
           title={isCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
-          className="p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-amber-400 border border-slate-800 hover:border-amber-500/30 transition shadow-sm"
+          className="p-2 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white border border-black/10 dark:border-white/10 transition"
         >
           {isCollapsed ? (
-            <PanelLeftOpen className="w-5 h-5 text-amber-400" />
+            <PanelLeftOpen className="w-5 h-5" />
           ) : (
             <PanelLeftClose className="w-4 h-4" />
           )}
@@ -85,8 +83,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 isCollapsed ? 'justify-center' : ''
               } ${
                 item.active
-                  ? 'bg-gradient-to-r from-amber-500/20 to-amber-500/5 text-amber-400 border border-amber-500/30 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+                  : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
               }`}
               title={isCollapsed ? item.label : undefined}
             >
@@ -118,13 +116,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Bottom version badge */}
       {!isCollapsed ? (
-        <div className="p-3 bg-gradient-to-b from-[#141b2d] to-[#0c1220] border border-slate-800/80 rounded-xl text-[11px] text-slate-400 text-center">
-          <p className="font-semibold text-slate-300">Cờ Tướng Online</p>
-          <p className="text-[10px] text-amber-500/80">Truyền Thống & Hiện Đại</p>
+        <div className="p-3 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl text-[11px] text-black/60 dark:text-white/60 text-center">
+          <p className="font-semibold text-black dark:text-white">Cờ Tướng Online</p>
+          <p className="text-[10px] text-slate-500">Minimalist Edition</p>
         </div>
       ) : (
-        <div className="flex justify-center p-2 text-slate-500">
-          <span className="font-serif font-bold text-amber-400/80 text-sm">將</span>
+        <div className="flex justify-center p-2 text-black/40 dark:text-white/40">
+          <span className="font-serif font-bold text-sm">將</span>
         </div>
       )}
     </aside>

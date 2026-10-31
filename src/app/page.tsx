@@ -18,11 +18,11 @@ export default function HomePage() {
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [joinRoomOpen, setJoinRoomOpen] = useState(false);
 
-  // Tabbar / Sidebar Collapse state (Matching user requirement)
+  // Tabbar / Sidebar Collapse state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
 
-  // 1. GIAO DIỆN LANDING PAGE (Khi chưa đăng nhập - Đúng theo Hình 1)
+  // 1. GIAO DIỆN LANDING PAGE (Khi chưa đăng nhập)
   if (!user) {
     return (
       <>
@@ -46,10 +46,12 @@ export default function HomePage() {
     );
   }
 
-  // 2. GIAO DIỆN TRANG CHỦ / DASHBOARD (Sau khi Login - Đúng theo Hình 2 với Menu bên trái & Icon ẩn/hiện)
+  // 2. GIAO DIỆN TRANG CHỦ / DASHBOARD (Sau khi Login)
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#11192e] via-[#0c1222] to-[#060911] flex">
-      {/* Menu / Tabbar bên trái có nút ẩn/hiện */}
+    // Đã xóa bỏ bg-gradient cứng nhắc. Background sẽ do layout.tsx (dark:bg-black bg-white) đảm nhận
+    <div className="flex min-h-screen transition-colors duration-500">
+      
+      {/* Menu / Tabbar bên trái */}
       <Sidebar
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
